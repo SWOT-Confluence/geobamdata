@@ -2,10 +2,20 @@ Package: geobamdata
 Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Authors@R: person("Nikki", "Tebaldi", role = c("aut", "cre"), email = "ntebaldi@umass.edu")
+Description: Takes netCDF file data from input directory and runs geoBAM on each
+    file. The results of the geoBAM computation are placed in the output 
+    directory as a single netCDF file. Mean and sigma variables are captured for
+    each reach file and grouped by Reach ID.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.1.1
+Imports:
+    geoBAMr,
+    ncdf4,
+    foreach,
+    rstan,
+    stats,
+    doParallel,
+    parallel
