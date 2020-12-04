@@ -23,7 +23,7 @@ process_data <- function(input_dir, output_dir) {
 
   # Get a dataframe of geobam computation results
   result_df <- foreach::foreach(file = file_list, .combine = c_data,
-                                .packages = c("geobamsevern", "ncdf4", "geoBAMr")) %dopar% run_geobam(file)
+                                .packages = c("ncdf4", "geoBAMr")) %dopar% run_geobam(file)
   doParallel::stopImplicitCluster()
 
   # Write netcdf of results grouped by reachid
