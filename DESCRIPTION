@@ -12,10 +12,12 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Imports:
-    geoBAMr,
     ncdf4,
     foreach,
     rstan,
     stats,
     doParallel,
     parallel
+Suggests: 
+    geoBAMr
+Additional_repositories: https://github.com/Fluvial-UMass/geoBAMr
