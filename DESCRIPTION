@@ -20,4 +20,3 @@ Imports:
     parallel
 Suggests: 
     geoBAMr
-Additional_repositories: https://github.com/Fluvial-UMass/geoBAMr.git
