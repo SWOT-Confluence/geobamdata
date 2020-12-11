@@ -30,6 +30,7 @@ process_data <- function(input_dir, output_dir) {
   # Write netcdf of results grouped by reachid
   write_netcdf(result_df, output_dir)
   message("netCDF file written to output directory.")
+
 }
 
 #
