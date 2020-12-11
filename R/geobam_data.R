@@ -69,20 +69,17 @@ get_data <- function(file) {
   width[width == width_fill$value] <- NA
   width[width == 0] <- NA
   width[is.na(width)] <- 1
-  width <- width[1:5, 1:10]
 
   #d_x_area
   d_x_area <- ncdf4::ncvar_get(file, "swot_node/d_x_area")
   da_fill <- ncdf4::ncatt_get(file, "swot_node/d_x_area", "_FillValue")
   d_x_area[d_x_area == da_fill$value] <- NA
   d_x_area[d_x_area == 0] <- NA
-  d_x_area <- d_x_area[1:5, 1:10]
 
-  # slope2
+  # slope2 ?? 0 values to 0.0001
   slope2_array <- ncdf4::ncvar_get(file, "swot_reach/slope2")
   slope_fill <- ncdf4::ncatt_get(file, "swot_reach/slope2", "_FillValue")
   slope2_array[slope2_array == slope_fill$value] <- NA
-  slope2_array <- slope2_array[1:10]
   slope2 <- matrix(slope2_array, nrow = nrow(d_x_area), ncol = ncol(d_x_area), byrow = TRUE)
   slope2[slope2 == 0] <- 0.00001
 
