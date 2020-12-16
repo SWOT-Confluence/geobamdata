@@ -17,7 +17,6 @@ process_data <- function(input_dir, output_dir) {
 
   # Run geobam on each file in the input directory
   file_list <- list.files(path = input_dir, pattern = "*.nc", full.names = TRUE)
-  message(c("Processing ", as.character(length(file_list)), " files."))
 
   # Setup cluster and register do parallel operator
   doParallel::registerDoParallel(parallel::makeCluster(parallel::detectCores()))
@@ -29,7 +28,6 @@ process_data <- function(input_dir, output_dir) {
 
   # Write netcdf of results grouped by reachid
   write_netcdf(result_df, output_dir)
-  message("netCDF file written to output directory.")
 
 }
 
