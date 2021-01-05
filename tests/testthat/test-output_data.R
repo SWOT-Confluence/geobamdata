@@ -44,6 +44,8 @@ test_that("write_netcdf writes a properly format netCDF file", {
   logwc_sigma <- ncdf4::ncvar_get(dataset, "2_1/logWc_sigma")
   expect_equal(length(logwc_sigma), 1)
 
+  ncdf4::nc_close(dataset)
+
 })
 
 

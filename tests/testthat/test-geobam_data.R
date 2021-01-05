@@ -1,39 +1,3 @@
-test_that("get_data returns a list of expected values", {
-
-  # Create expected list
-  slope2 <- matrix(c(0.0001638646, 0.0001638646, 0.0001643724, 0.0001798677, 0.0001824383,
-              0.0001638646, 0.0001638646, 0.0001643724, 0.0001798677, 0.0001824383,
-              0.0001638646, 0.0001638646, 0.0001643724, 0.0001798677, 0.0001824383),
-              nrow = 3, byrow = TRUE)
-  width <- matrix(c(1,  180, 180, 630, 630,
-                    1, 180, 180, 540, 540,
-                    1, 180, 180, 540, 540),
-                  nrow = 3, byrow = TRUE)
-
-  d_x_area <- matrix(c(NA, NA, NA, -271.5525, -282.735,
-                       NA, NA, NA, -217.2420, -226.188,
-                       NA, NA, NA, -217.2420, -226.188),
-                     nrow = 3, byrow = TRUE)
-  qhat <- 21.01557
-  expected_list <- list(width = width, slope2 = slope2, d_x_area = d_x_area, qhat = qhat)
-
-  # Run get_data
-  file <- ncdf4::nc_open("SevernRiver_Reach_2_1.nc")
-  actual_list <- get_data(file)
-
-  # Put into a comparable form
-  expected_list$d_x_area[is.na(expected_list$d_x_area)] <- 1
-  actual_list$d_x_area[is.na(actual_list$d_x_area)] <- 1
-
-  # Compare
-  expected <- rep(TRUE, 46)
-  actual <- dplyr::near(unlist(unname(expected_list)), unlist(unname(actual_list)), tol = 0.001)
-
-  # Assert result
-  expect_equal(actual, expected)
-
-})
-
 test_that("get_mean returns correct value on a 5 x 5 array", {
 
   # Create array
