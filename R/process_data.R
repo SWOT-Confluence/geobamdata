@@ -21,9 +21,14 @@ process_data <- function(input_dir, output_dir) {
   # Setup cluster and register do parallel operator
   doParallel::registerDoParallel(parallel::makeCluster(parallel::detectCores()))
 
+  # Get a list of lists which contains data for each reach
+  reach_list <- foreach::foreach(file = file_list, .combine = 'c',
+                                 .packages = c("ncdf4")) %dopar% get_input(file)
+
   # Get a dataframe of geobam computation results
-  result_df <- foreach::foreach(file = file_list, .combine = c_data,
-                                .packages = c("ncdf4", "geoBAMr")) %dopar% run_geobam(file)
+  result_df <- foreach::foreach(reach = reach_list, .combine = df_data,
+                                .packages = c("ncdf4", "geoBAMr")) %dopar% run_geobam(reach)
+
   doParallel::stopImplicitCluster()
 
   # Write netcdf of results grouped by reachid
@@ -40,8 +45,6 @@ process_data <- function(input_dir, output_dir) {
 #' @param result2 data.frame
 #'
 #' @return data.frame
-c_data <- function(result1, result2) {
-  names(result1)[1] <- "reachid"
-  names(result2)[1] <- "reachid"
-  rbind(result1, result2)
+df_data <- function(df1, df2) {
+  rbind(df1, df2)
 }

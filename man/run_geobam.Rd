@@ -4,7 +4,7 @@
 \alias{run_geobam}
 \title{Run geobam}
 \usage{
-run_geobam(file)
+run_geobam(reach)
 }
 \arguments{
 \item{file}{netCDF file}
