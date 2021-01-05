@@ -1,6 +1,6 @@
 Package: geobamdata
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Executes geoBAM
 Version: 0.1.0
 Authors@R: person("Nikki", "Tebaldi", role = c("aut", "cre"), email = "ntebaldi@umass.edu")
 Description: Takes netCDF file data from input directory and runs geoBAM on each
