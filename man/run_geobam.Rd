@@ -7,11 +7,11 @@
 run_geobam(reach)
 }
 \arguments{
-\item{file}{netCDF file}
+\item{reach}{list of reach data}
 }
 \value{
 data.frame
 }
 \description{
-Get output from geoBAMr execution on each netCDF input file.
+Get output from geoBAMr execution on each reach data input.
 }

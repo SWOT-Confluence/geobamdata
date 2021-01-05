@@ -1,8 +1,8 @@
 #' Run geobam
 #'
-#' Get output from geoBAMr execution on each netCDF input file.
+#' Get output from geoBAMr execution on each reach data input.
 #'
-#' @param file netCDF file
+#' @param reach list of reach data
 #'
 #' @return data.frame
 #'

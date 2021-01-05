@@ -22,10 +22,12 @@ process_data <- function(input_dir, output_dir) {
   doParallel::registerDoParallel(parallel::makeCluster(parallel::detectCores()))
 
   # Get a list of lists which contains data for each reach
+  file <- NULL
   reach_list <- foreach::foreach(file = file_list, .combine = 'c',
                                  .packages = c("ncdf4")) %dopar% get_input(file)
 
   # Get a dataframe of geobam computation results
+  reach <- NULL
   result_df <- foreach::foreach(reach = reach_list, .combine = df_data,
                                 .packages = c("ncdf4", "geoBAMr")) %dopar% run_geobam(reach)
 
@@ -41,8 +43,8 @@ process_data <- function(input_dir, output_dir) {
 #'
 #' Combine function for foreach statement.
 #'
-#' @param result1 data.frame
-#' @param result2 data.frame
+#' @param df1 data.frame
+#' @param df2 data.frame
 #'
 #' @return data.frame
 df_data <- function(df1, df2) {
