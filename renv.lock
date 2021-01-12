@@ -226,6 +226,18 @@
       "Repository": "CRAN",
       "Hash": "4d243a9c10b00589889fe32314ffd902"
     },
+    "geoBAMr": {
+      "Package": "geoBAMr",
+      "Version": "0.0.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "geoBAMr",
+      "RemoteUsername": "craigbrinkerhoff",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "22bdd14cf1c0a654ecf7ee7679cef4fdcae98ef9",
+      "Hash": "ab0ae96458ccfbae1af9c1d9525e3d5e"
+    },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "3.3.3",
@@ -454,6 +466,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "52772d81aa532a6331fd535701882c12"
+    },
+    "rstantools": {
+      "Package": "rstantools",
+      "Version": "2.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c91e0f20c967e246cb6f2efe8c60e15b"
     },
     "rstudioapi": {
       "Package": "rstudioapi",

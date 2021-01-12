@@ -11,30 +11,28 @@
 #' @return None
 #'
 #' @importFrom foreach %dopar%
+#' @importFrom foreach %:%
 #'
 #' @export
 process_data <- function(input_dir, output_dir) {
 
-  # Run geobam on each file in the input directory
-  file_list <- list.files(path = input_dir, pattern = "*.nc", full.names = TRUE)
+  # Obtain a list of reach input data from swot and sword files
+  reach_list <- get_input_data(input_dir)
 
   # Setup cluster and register do parallel operator
-  doParallel::registerDoParallel(parallel::makeCluster(parallel::detectCores()))
-
-  # Get a list of lists which contains data for each reach
-  file <- NULL
-  reach_list <- foreach::foreach(file = file_list, .combine = 'c',
-                                 .packages = c("ncdf4")) %dopar% get_input(file)
+  cl <- parallel::makeCluster(parallel::detectCores())
+  doParallel::registerDoParallel(cl)
 
   # Get a dataframe of geobam computation results
   reach <- NULL
-  result_df <- foreach::foreach(reach = reach_list, .combine = df_data,
+  result_df <- foreach::foreach(reach = reach_list, .combine = df_data, .export = c("run_geobam"),
                                 .packages = c("ncdf4", "geoBAMr")) %dopar% run_geobam(reach)
-
-  doParallel::stopImplicitCluster()
 
   # Write netcdf of results grouped by reachid
   write_netcdf(result_df, output_dir)
+
+  # Close cluster connections
+  parallel::stopCluster(cl)
 
 }
 

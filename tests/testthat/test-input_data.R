@@ -1,4 +1,4 @@
-test_that("get_input returns a list of expected values", {
+test_that("parse_reach_data returns a list of expected values", {
 
   # Create expected list
   slope2 <- matrix(c(0.0001638646, 0.0001638646, 0.0001643724, 0.0001798677, 0.0001824383,
@@ -17,8 +17,8 @@ test_that("get_input returns a list of expected values", {
   qhat <- 21.01557
   expected_list <- list(data_list = list(width = width, slope2 = slope2, d_x_area = d_x_area, qhat = qhat, reachid = "2_1"))
 
-  # Run get_input
-  actual_list <- get_input("SevernRiver_Reach_2_1.nc")
+  # Run parse_reach_data
+  actual_list <- parse_reach_data("SWOT_2_1.nc", "SWORD_2_1.nc")
 
   # Compare reachids
   expect_equal(actual_list$data_list$reachid, expected_list$data_list$reachid)
