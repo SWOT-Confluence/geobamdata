@@ -4,10 +4,10 @@
 \alias{create_vars}
 \title{Create a list of netcdf4 variables}
 \usage{
-create_vars(df_slice, nt_dim, nx_dim)
+create_vars(reachid, nt_dim, nx_dim)
 }
 \arguments{
-\item{df_slice}{data.frame}
+\item{reachid}{string reach identifier}
 
 \item{nt_dim}{ncdim}
 

@@ -4,9 +4,11 @@
 \alias{create_nc_file}
 \title{Create netCDF output file}
 \usage{
-create_nc_file(var_list, output_dir)
+create_nc_file(reachid, var_list, output_dir)
 }
 \arguments{
+\item{reachid}{string reach identifier}
+
 \item{var_list}{list ncvar}
 
 \item{output_dir}{character}

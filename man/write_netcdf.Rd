@@ -4,17 +4,19 @@
 \alias{write_netcdf}
 \title{Write netCDF}
 \usage{
-write_netcdf(result_df, output_dir)
+write_netcdf(reach_data, posterior_list, output_dir)
 }
 \arguments{
-\item{result_df}{data.frame}
+\item{reach_data}{list of reach data (observations)}
 
-\item{output_dir}{character}
+\item{posterior_list}{list of posterior data}
+
+\item{output_dir}{string path to output directory}
 }
 \value{
 None
 }
 \description{
-Writes netcdf for results dataframe to output directory as a single file
-called 'geobamr_output_ALL.nc' with variables groups by Reach ID.
+Writes netCDF of posterior data to output directory labelled with reach
+identifier.
 }

@@ -4,12 +4,14 @@
 \alias{write_vars}
 \title{Write netcdf variables}
 \usage{
-write_vars(df_slice, var_list, nc_out)
+write_vars(valid, posterior_list, var_list, nc_out)
 }
 \arguments{
-\item{df_slice}{data.frame}
+\item{valid}{boolean value to indicate validity of reach}
 
-\item{var_list}{list ncvar}
+\item{posterior_list}{list of posterior data}
+
+\item{var_list}{list of ncvar}
 
 \item{nc_out}{ncdf4}
 }
@@ -17,5 +19,6 @@ write_vars(df_slice, var_list, nc_out)
 None
 }
 \description{
-Write mean and sigma variables to netcdf file.
+Write reachid, mean and sigma variables to netcdf file. Also includes
+a valid global attribute to indicate validity of reach data.
 }

@@ -4,10 +4,12 @@
 \alias{create_dimensions}
 \title{Create netCDF dimensions}
 \usage{
-create_dimensions(df_slices)
+create_dimensions(nx, nt)
 }
 \arguments{
-\item{df_slices}{data.frame}
+\item{nx}{integer vector that represents number of nodes}
+
+\item{nt}{integer vector that represents time steps}
 }
 \value{
 list ncdim

@@ -2,83 +2,146 @@
 #'
 #' Retrieve geoBAM input variables and replace fill values with NA.
 #'
-#' @param input_dir file directory
+#' @param reachid string reach identifier
+#' @param data_dir directory that contains SWOT and SoS data
 #'
-#' @return list matrix
+#' @return list matrix of reach data (both valid and invalid)
 #'
 #' @export
-get_input_data <- function(input_dir) {
+get_input_data <- function(reachid, data_dir) {
 
-  # Get a list of SWOT and SWORD files
-  swot_dir = file.path(input_dir, "swot")
-  swot_list <- list.files(path = swot_dir, pattern = "*.nc", full.names = TRUE)
-  sword_dir = file.path(input_dir, "sword")
-  sword_list <- list.files(path = sword_dir, pattern = "*.nc", full.names = TRUE)
-
-  # Setup cluster and register do parallel operator
-  cl <- parallel::makeCluster(parallel::detectCores())
-  doParallel::registerDoParallel(cl)
-
-  # Obtain a list of reach data from swot and sword files
-  swot_file <- NULL
-  sword_file <- NULL
-  reach_list <- foreach::foreach(swot_file = swot_list, sword_file = sword_list,
-                                 .combine = 'c', .export = c("parse_reach_data"),
-                                 .packages = c("ncdf4")) %dopar% parse_reach_data(swot_file, sword_file)
-
-  # Close cluster connections
-  parallel::stopCluster(cl)
-
-  return(reach_list)
-
-}
-
-#' Get netcdf data from files
-#'
-#' Retrieve geoBAM input variables and replace fill values with NA.
-#'
-#' @param swot_file netcdf
-#' @param sword_file netcdf
-#'
-#' @return list matrix
-parse_reach_data <- function(swot_file, sword_file) {
+  # SWOT and SoS files
+  swot_file <- file.path(data_dir, "swot", paste0(reachid, "_SWOT.nc"))
+  sos_file <- file.path(data_dir, "sos", paste0(reachid, "_SOS.nc"))
 
   # Open files for reading and get data
   swot_input <- ncdf4::nc_open(swot_file)
-  sword_input <- ncdf4::nc_open(sword_file)
+  sos_input <- ncdf4::nc_open(sos_file)
 
-  # width ?? set width NAs to 1
-  width <- ncdf4::ncvar_get(swot_input, "swot_node/width")
-  width_fill <- ncdf4::ncatt_get(swot_input, "swot_node/width", "_FillValue")
+  # Track nx and nt
+  nx <- ncdf4::ncvar_get(swot_input, "nx")
+  #nt <- ncdf4::ncvar_get(swot_input, "nt")
+  #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:100]
+  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:10]
+
+  # Check global attribute for reach validity and return empty list if invalid
+  valid <- ncdf4::ncatt_get(sos_input, 0)$valid[[1]]
+  if (valid == 0) { return(list(valid = FALSE, reachid = reachid, nx = nx,
+                                     nt = nt)) }
+
+  # width
+  width <- ncdf4::ncvar_get(swot_input, "node/width")
+  width_fill <- ncdf4::ncatt_get(swot_input, "node/width", "_FillValue")
   width[width == width_fill$value] <- NA
-  width[width == 0] <- NA
-  width[is.na(width)] <- 1
+  #width = t(width)
+  #width = t(width)[, 4000:4099]
+  width = t(width)[, 4000:4009]
 
-  #d_x_area
-  d_x_area <- ncdf4::ncvar_get(swot_input, "swot_node/d_x_area")
-  da_fill <- ncdf4::ncatt_get(swot_input, "swot_node/d_x_area", "_FillValue")
+  #d_x_area ?? set 0 values to NA
+  d_x_area <- ncdf4::ncvar_get(swot_input, "node/d_x_area")
+  da_fill <- ncdf4::ncatt_get(swot_input, "node/d_x_area", "_FillValue")
   d_x_area[d_x_area == da_fill$value] <- NA
-  d_x_area[d_x_area == 0] <- NA
+  #d_x_area = t(d_x_area)
+  #d_x_area = t(d_x_area)[, 4000:4099]
+  d_x_area = t(d_x_area)[, 4000:4009]
 
-  # slope2 ?? 0 values to 0.0001
-  slope2_array <- ncdf4::ncvar_get(swot_input, "swot_reach/slope2")
-  slope_fill <- ncdf4::ncatt_get(swot_input, "swot_reach/slope2", "_FillValue")
-  slope2_array[slope2_array == slope_fill$value] <- NA
-  slope2 <- matrix(slope2_array, nrow = nrow(d_x_area), ncol = ncol(d_x_area), byrow = TRUE)
-  slope2[slope2 == 0] <- 0.00001
+  # slope2
+  slope2 <- ncdf4::ncvar_get(swot_input, "node/slope2")
+  slope_fill <- ncdf4::ncatt_get(swot_input, "node/slope2", "_FillValue")
+  slope2[slope2 == slope_fill$value] <- NA
+  #slope2 = t(slope2)
+  #slope2 = t(slope2)[, 4000:4099]
+  slope2 = t(slope2)[, 4000:4009]
 
-  # Qhat ?? check that Qhat is not negative
-  qhat <- ncdf4::ncvar_get(sword_input, "Qhat")
-  qhat_fill <- ncdf4::ncatt_get(sword_input, "Qhat", "_FillValue")
+  # Qhat
+  qhat <- ncdf4::ncvar_get(sos_input, "reach/Qhat")
+  qhat_fill <- ncdf4::ncatt_get(sos_input, "reach/Qhat", "_FillValue")
   qhat[qhat == qhat_fill$value] <- NA
-  qhat[qhat < 0] <- qhat * -1
+  qhat = rep(qhat, times = length(nt))
 
-  # Reach ID
-  file_vec <- unlist(strsplit(swot_file, split = "/"))
-  file_name <- strsplit(file_vec[length(file_vec)], split = ".nc")
-  name <- strsplit(as.character(file_name[1]), split = "_")
-  reachid = paste0(name[[1]][2], "_", name[[1]][3])
+  # Check validity of observation data
+  obs_data <- check_observations(width, d_x_area, slope2, qhat)
+  if (length(obs_data) == 0) { return(list(valid = FALSE,
+                                                reachid = reachid, nx = nx,
+                                                nt = nt)) }
 
-  return(list(data_list = list(width = width, slope2 = slope2, d_x_area = d_x_area, qhat = qhat, reachid = reachid)))
+  # Create a list of data with reach identifier
+  return(list(valid = TRUE, reachid = reachid, nx = nx, nt = nt,
+                   width = obs_data$width, slope2 = obs_data$slope2,
+                   d_x_area = obs_data$d_x_area, qhat = obs_data$qhat,
+                   invalid_nodes = obs_data$invalid_nodes,
+                   invalid_time = obs_data$invalid_time))
+
+}
+
+#' Checks if observation data is valid.
+#'
+#' @param width matrix
+#' @param d_x_area matrix
+#' @param slope2 matrix
+#' @param qhat vector
+#'
+#' @return list of valid observations or an empty list if there are none
+#'
+#' @export
+check_observations <- function(width, d_x_area, slope2, qhat) {
+  # Test for negative data
+  width[width < 0] <- NA
+  slope2[slope2 < 0] <- NA
+  qhat[qhat < 0] <- NA
+
+  # Qhat
+  if (is.na(qhat[[1]])) { return(vector(mode = "list")) }
+
+  # Get invalid width indexes and remove from observation data; test if enough data is present
+  invalid_width <- get_invalid(width)
+  width <- width[!invalid_width$invalid_nodes, !invalid_width$invalid_time]
+  d_x_area <- d_x_area[!invalid_width$invalid_nodes, !invalid_width$invalid_time]
+  slope2 <- slope2[!invalid_width$invalid_nodes, !invalid_width$invalid_time]
+  if (nrow(width) < 5 || ncol(width) < 5 ) { return(vector(mode = "list")) }
+
+  # Get invalid d_x_area indexes and remove from observation data; test if enough data is present
+  invalid_d_x_area <- get_invalid(d_x_area)
+  d_x_area <- d_x_area[!invalid_d_x_area$invalid_nodes, !invalid_d_x_area$invalid_time]
+  width <- width[!invalid_d_x_area$invalid_nodes, !invalid_d_x_area$invalid_time]
+  slope2 <- slope2[!invalid_d_x_area$invalid_nodes, !invalid_d_x_area$invalid_time]
+  if (nrow(d_x_area) < 5 || ncol(d_x_area) < 5 ) { return(vector(mode = "list")) }
+
+  # Get invalid slope2 indexes and remove from observation data; test if enough data is present
+  invalid_slope2 <- get_invalid(slope2)
+  slope2 <- slope2[!invalid_slope2$invalid_nodes, !invalid_slope2$invalid_time]
+  d_x_area <- d_x_area[!invalid_slope2$invalid_nodes, !invalid_slope2$invalid_time]
+  width <- width[!invalid_slope2$invalid_nodes, !invalid_slope2$invalid_time]
+  if (nrow(slope2) < 5 || ncol(slope2) < 5 ) { return(vector(mode = "list")) }
+
+  # Concatenate lists
+  invalid_width_n <- which(invalid_width$invalid_nodes == TRUE)
+  invalid_d_x_area_n <- which(invalid_d_x_area$invalid_nodes == TRUE)
+  invalid_slope2_n <- which(invalid_slope2$invalid_nodes == TRUE)
+  invalid_nodes <- unique(c(invalid_width_n, invalid_d_x_area_n, invalid_slope2_n))
+
+  invalid_width_t <- which(invalid_width$invalid_time == TRUE)
+  invalid_d_x_area_t <- which(invalid_d_x_area$invalid_time == TRUE)
+  invalid_slope2_t <- which(invalid_slope2$invalid_time == TRUE)
+  invalid_time <- unique(c(invalid_width_t, invalid_d_x_area_t, invalid_slope2_t))
+
+  # Return list of valid observation data
+  return(list(width = width, d_x_area = d_x_area, slope2 = slope2, qhat = qhat, invalid_nodes = invalid_nodes, invalid_time = invalid_time))
+
+}
+
+#' Checks if observation parameter has valid nx (nodes) and valid nt (time steps)
+#'
+#' @param obs matrix
+#'
+#' @return list of invalid nodes and invalid time steps
+#'
+#' @export
+get_invalid <- function(obs) {
+
+  # Determine invalid nx and nt for obs
+  invalid_nodes = rowSums(is.na(obs)) >= (ncol(obs) - 5)
+  invalid_time = colSums(is.na(obs)) >= (nrow(obs) - 5)
+  return(list(invalid_nodes = invalid_nodes, invalid_time = invalid_time))
 
 }

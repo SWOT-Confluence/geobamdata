@@ -4,14 +4,15 @@
 \alias{run_geobam}
 \title{Run geobam}
 \usage{
-run_geobam(reach)
+run_geobam(reachid, data_dir, output_dir)
 }
 \arguments{
-\item{reach}{list of reach data}
-}
-\value{
-data.frame
+\item{reachid}{string reach identifier}
+
+\item{data_dir}{directory of SWOT and SoS input files}
+
+\item{output_dir}{directory where posterior output will be written}
 }
 \description{
-Get output from geoBAMr execution on each reach data input.
+Write output from geoBAM execution on each reach data input.
 }

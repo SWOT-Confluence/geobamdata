@@ -18,7 +18,9 @@ Imports:
     rstan,
     stats,
     doParallel,
-    parallel
+    parallel,
+    reshape2,
+    settings
 Suggests: 
     geoBAMr,
     testthat
