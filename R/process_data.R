@@ -20,23 +20,17 @@ process_data <- function(input_dir, output_dir) {
   swot_dir = file.path(input_dir, "swot")
   reaches <- lapply(list.files(swot_dir), get_reach_id)
 
-  # Setup cluster and register do parallel operator
-  cl <- parallel::makeCluster(parallel::detectCores(), outfile="debug.txt")
-  parallel::clusterExport(cl, c("run_geobam", "get_input_data",
-                                "check_observations", "get_invalid",
-                                "create_posterior_list", "get_posteriors",
-                                "update_posteriors", "get_mean", "get_sd",
-                                "write_netcdf", "create_dimensions",
-                                "create_vars", "create_nc_file",
-                                "concatenate_invalid", "write_vars"))
-  doParallel::registerDoParallel(cl)
+  # Setup future backend for foreach
+  doFuture::registerDoFuture()
+  #future::plan(future::multisession)
+  future::plan(future.batchtools::batchtools_slurm,
+               template = "slurm-simple.tmpl",
+               resources = list(ncpus = 48L, memory = "4G", walltime = 3600L, queue = "cee_water_cjgleason"))
 
   # Run geobam on each reach
   reachid <- NULL
-  foreach::foreach(reachid = reaches, .packages = c("ncdf4", "geoBAMr")) %dopar% run_geobam(reachid = reachid, data_dir = input_dir, output_dir = output_dir)
-
-  # Close cluster connections
-  parallel::stopCluster(cl)
+  `%dorng%` <- doRNG::`%dorng%`
+  foreach::foreach(reachid = reaches, .packages = c("ncdf4", "geoBAMr")) %dorng% { run_geobam(reachid = reachid, data_dir = input_dir, output_dir = output_dir) }
 
 }
 

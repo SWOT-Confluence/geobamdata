@@ -20,7 +20,10 @@ Imports:
     doParallel,
     parallel,
     reshape2,
-    settings
+    settings,
+    future,
+    doFuture,
+    doRNG
 Suggests: 
     geoBAMr,
     testthat
