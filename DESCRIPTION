@@ -17,13 +17,9 @@ Imports:
     foreach,
     rstan,
     stats,
-    doParallel,
-    parallel,
     reshape2,
     settings,
-    future,
-    doFuture,
-    doRNG
+    rslurm
 Suggests: 
     geoBAMr,
     testthat

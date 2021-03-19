@@ -20,17 +20,8 @@ process_data <- function(input_dir, output_dir) {
   swot_dir = file.path(input_dir, "swot")
   reaches <- lapply(list.files(swot_dir), get_reach_id)
 
-  # Setup future backend for foreach
-  doFuture::registerDoFuture()
-  #future::plan(future::multisession)
-  future::plan(future.batchtools::batchtools_slurm,
-               template = "slurm-simple.tmpl",
-               resources = list(ncpus = 48L, memory = "4G", walltime = 3600L, queue = "cee_water_cjgleason"))
-
-  # Run geobam on each reach
-  reachid <- NULL
-  `%dorng%` <- doRNG::`%dorng%`
-  foreach::foreach(reachid = reaches, .packages = c("ncdf4", "geoBAMr")) %dorng% { run_geobam(reachid = reachid, data_dir = input_dir, output_dir = output_dir) }
+  # Run geobam on each reach in parallel
+  rslurm::slurm_map(reaches, run_geobam, data_dir = input_dir, output_dir = output_dir, nodes = 1, cpus_per_node = 48, pkgs = c("ncdf4", "geoBAMr"), submit = FALSE)
 
 }
 
