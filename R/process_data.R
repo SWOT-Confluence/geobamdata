@@ -10,9 +10,6 @@
 #'
 #' @return None
 #'
-#' @importFrom foreach %dopar%
-#' @importFrom foreach %:%
-#'
 #' @export
 process_data <- function(input_dir, output_dir) {
 
@@ -21,7 +18,7 @@ process_data <- function(input_dir, output_dir) {
   reaches <- lapply(list.files(swot_dir), get_reach_id)
 
   # Run geobam on each reach in parallel
-  rslurm::slurm_map(reaches, run_geobam, data_dir = input_dir, output_dir = output_dir, nodes = 1, cpus_per_node = 48, pkgs = c("ncdf4", "geoBAMr"), submit = FALSE)
+  rslurm::slurm_apply(reaches, run_geobam, data_dir = input_dir, output_dir = output_dir, nodes = 1, cpus_per_node = 48, pkgs = c("ncdf4", "geoBAMr"), submit = FALSE)
 
 }
 
