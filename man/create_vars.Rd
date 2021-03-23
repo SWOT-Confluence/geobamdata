@@ -4,9 +4,11 @@
 \alias{create_vars}
 \title{Create a list of netcdf4 variables}
 \usage{
-create_vars(reachid, nt_dim, nx_dim)
+create_vars(chain, reachid, nt_dim, nx_dim)
 }
 \arguments{
+\item{chain}{integer value that indicates chain number}
+
 \item{reachid}{string reach identifier}
 
 \item{nt_dim}{ncdim}

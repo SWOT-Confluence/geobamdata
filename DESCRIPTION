@@ -19,6 +19,8 @@ Imports:
     stats,
     reshape2,
     settings,
+    parallel,
+    doParallel,
     rslurm
 Suggests: 
     geoBAMr,

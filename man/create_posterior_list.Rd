@@ -4,11 +4,9 @@
 \alias{create_posterior_list}
 \title{Creates data.frame of NA values for each geoBAM posterior.}
 \usage{
-create_posterior_list(reachid, nx, nt)
+create_posterior_list(nx, nt)
 }
 \arguments{
-\item{reachid}{string reach identifier}
-
 \item{nx}{integer number of nodes}
 
 \item{nt}{integer number of time steps}

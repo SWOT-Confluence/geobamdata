@@ -4,12 +4,20 @@
 \alias{process_data}
 \title{Execute geobam on data}
 \usage{
-process_data(input_dir, output_dir)
+process_data(input_dir, output_dir, env, cores = NA, nodes = NA, ncpus = NA)
 }
 \arguments{
-\item{input_dir}{character}
+\item{input_dir}{character vecto}
 
 \item{output_dir}{character}
+
+\item{env}{character name of environment to execute in}
+
+\item{cores}{number of cores to run on (for workstation run only)}
+
+\item{nodes}{number of nodes to run across (for HPC SLURM run only)}
+
+\item{ncpus}{number of cpus per node to run across (for HPC SLURM run only)}
 }
 \value{
 None

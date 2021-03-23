@@ -15,19 +15,33 @@ write_netcdf <- function(reach_data, posterior_list, output_dir) {
   # Define dimensions
   dim_list <- create_dimensions(reach_data$nx, reach_data$nt)
 
-  # Create list of all variables
-  var_list <- create_vars(reach_data$reachid, dim_list$nt_dim, dim_list$nx_dim)
+  # Create list of all posterior mean and sd variables
+  var_list <- lapply(list(1,2,3), create_vars, reachid = reach_data$reachid,
+                     nt_dim = dim_list$nt_dim, nx_dim = dim_list$nx_dim)
 
-  # Create netcdf file
-  nc_out <- create_nc_file(reach_data$reachid, var_list, output_dir)
+  # Define reachid variable
+  nchar_dim <- ncdf4::ncdim_def("nchar", "", 1:10, create_dimvar = FALSE)
+  id <- ncdf4::ncvar_def(paste(reach_data$reachid, "reach_id", sep ='/'),
+                         units = '', dim = list(nchar_dim), prec = "char")
+
+  # Create netcdf
+  all_vars <- append(var_list, list(list(id = id)))
+  all_vars <- unlist(all_vars, recursive = FALSE, use.names = FALSE)
+  nc_out <- create_nc_file(reach_data$reachid, all_vars, output_dir)
 
   # Concatenate invalid nodes back into valid posterior reach data
   if (reach_data$valid == TRUE) {
-    posterior_list <- concatenate_invalid(posterior_list, reach_data$invalid_nodes, reach_data$invalid_time)
+    posterior_list <- lapply(posterior_list, concatenate_invalid,
+                                   invalid_nodes = reach_data$invalid_nodes,
+                                   invalid_time = reach_data$invalid_time)
   }
 
-  # Write all variables to the netcdf file
-  write_vars(reach_data$valid, posterior_list, var_list, nc_out)
+  # Write valid global attribute, reach identifier and posteriors to netcdf
+  if (reach_data$valid == TRUE) valid = 1 else valid = 0
+  ncdf4::ncatt_put(nc_out, 0, "valid", valid)
+  ncdf4::ncvar_put(nc_out, id, reach_data$reachid)
+  lapply(list(1,2,3), write_vars, posterior_list = posterior_list,
+         var_list = var_list, nc_out = nc_out)
 
   # Close nc file
   ncdf4::nc_close(nc_out)
@@ -52,43 +66,42 @@ create_dimensions <- function(nx, nt) {
 #'
 #' Create list of mean and sigma netcdf variables grouped by reachid.
 #'
+#' @param chain integer value that indicates chain number
 #' @param reachid string reach identifier
 #' @param nt_dim ncdim
 #' @param nx_dim ncdim
 #'
 #' @return list ncvar
-create_vars <- function(reachid, nt_dim, nx_dim) {
-
-  # Reach identifier variable
-  nchar_dim <- ncdf4::ncdim_def("nchar", "", 1:8, create_dimvar = FALSE)
-  id <- ncdf4::ncvar_def(paste(reachid, "reach_id", sep ='/'), units = '', dim = list(nchar_dim), prec = "char")
+create_vars <- function(chain, reachid, nt_dim, nx_dim) {
 
   # Mean variables
-  logq_m <- ncdf4::ncvar_def(paste(reachid, "logQ_mean", sep ='/'), units = '', dim = nt_dim, missval = -999999999999, prec = "float")
-  logn_man_m <- ncdf4::ncvar_def(paste(reachid, "logn_man_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logn_amhg_m <- ncdf4::ncvar_def(paste(reachid, "logn_amhg_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  A0_m <- ncdf4::ncvar_def(paste(reachid, "A0_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logWc_m <- ncdf4::ncvar_def(paste(reachid, "logWc_mean", sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
-  logQc_m <- ncdf4::ncvar_def(paste(reachid, "logQc_mean", sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
-  b_m <- ncdf4::ncvar_def(paste(reachid, "b_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logr_m <- ncdf4::ncvar_def(paste(reachid, "logr_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logWb_m <- ncdf4::ncvar_def(paste(reachid, "logWb_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logDb_m <- ncdf4::ncvar_def(paste(reachid, "logDb_mean", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  mean <- paste("mean_chain", chain, sep='')
+  logq_m <- ncdf4::ncvar_def(paste(reachid, "logQ", mean, sep ='/'), units = '', dim = nt_dim, missval = -999999999999, prec = "float")
+  logn_man_m <- ncdf4::ncvar_def(paste(reachid, "logn_man", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logn_amhg_m <- ncdf4::ncvar_def(paste(reachid, "logn_amhg", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  A0_m <- ncdf4::ncvar_def(paste(reachid, "A0", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logWc_m <- ncdf4::ncvar_def(paste(reachid, "logWc", mean, sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
+  logQc_m <- ncdf4::ncvar_def(paste(reachid, "logQc", mean, sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
+  b_m <- ncdf4::ncvar_def(paste(reachid, "b", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logr_m <- ncdf4::ncvar_def(paste(reachid, "logr", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logWb_m <- ncdf4::ncvar_def(paste(reachid, "logWb", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logDb_m <- ncdf4::ncvar_def(paste(reachid, "logDb", mean, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
 
   # Sigma variables
-  logq_sd <- ncdf4::ncvar_def(paste(reachid, "logQ_sigma", sep ='/'), units = '', dim = nt_dim, missval = -999999999999, prec = "float")
-  logn_man_sd <- ncdf4::ncvar_def(paste(reachid, "logn_man_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logn_amhg_sd <- ncdf4::ncvar_def(paste(reachid, "logn_amhg_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  A0_sd <- ncdf4::ncvar_def(paste(reachid, "A0_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logWc_sd <- ncdf4::ncvar_def(paste(reachid, "logWc_sigma", sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
-  logQc_sd <- ncdf4::ncvar_def(paste(reachid, "logQc_sigma", sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
-  b_sd <- ncdf4::ncvar_def(paste(reachid, "b_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logr_sd <- ncdf4::ncvar_def(paste(reachid, "logr_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logWb_sd <- ncdf4::ncvar_def(paste(reachid, "logWb_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
-  logDb_sd <- ncdf4::ncvar_def(paste(reachid, "logDb_sigma", sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  sd <- paste("sd_chain", chain, sep='')
+  logq_sd <- ncdf4::ncvar_def(paste(reachid, "logQ", sd, sep ='/'), units = '', dim = nt_dim, missval = -999999999999, prec = "float")
+  logn_man_sd <- ncdf4::ncvar_def(paste(reachid, "logn_man", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logn_amhg_sd <- ncdf4::ncvar_def(paste(reachid, "logn_amhg", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  A0_sd <- ncdf4::ncvar_def(paste(reachid, "A0", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logWc_sd <- ncdf4::ncvar_def(paste(reachid, "logWc", sd, sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
+  logQc_sd <- ncdf4::ncvar_def(paste(reachid, "logQc", sd, sep ='/'), units = '', dim = list(), missval = -999999999999, prec = "float")
+  b_sd <- ncdf4::ncvar_def(paste(reachid, "b", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logr_sd <- ncdf4::ncvar_def(paste(reachid, "logr", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logWb_sd <- ncdf4::ncvar_def(paste(reachid, "logWb", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
+  logDb_sd <- ncdf4::ncvar_def(paste(reachid, "logDb", sd, sep ='/'), units = '', dim = nx_dim, missval = -999999999999, prec = "float")
 
   # List of all variables
-  return(list(id = id, logq_m = logq_m, logn_man_m = logn_man_m,
+  return(list(logq_m = logq_m, logn_man_m = logn_man_m,
               logn_amhg_m = logn_amhg_m, A0_m = A0_m, logWc_m = logWc_m,
               logQc_m = logQc_m, b_m = b_m, logr_m = logr_m,
               logWb_m = logWb_m, logDb_m = logDb_m, logq_sd = logq_sd,
@@ -122,12 +135,6 @@ create_nc_file <- function(reachid, var_list, output_dir) {
 #' @return list of posterior data with NA in place of invalid nodes
 concatenate_invalid <- function(posterior_list, invalid_nodes, invalid_time) {
 
-  # Node data
-  #nx_vector <- rep(NA, length(invalid_nodes))
-  #logn_man_mean <- c(posterior_list$logn_man_mean, nx_vector)
-  #v <- R.utils::insert(logn_man_mean, at = invalid_nodes, values = nx_vector)
-
-  # Node-level data
   for (index in invalid_nodes) {
     posterior_list$logn_man_mean <- append(posterior_list$logn_man_mean, NA, after = index - 1)
     posterior_list$logn_man_sd <- append(posterior_list$logn_man_sd, NA, after = index - 1)
@@ -160,42 +167,35 @@ concatenate_invalid <- function(posterior_list, invalid_nodes, invalid_time) {
 #' Write reachid, mean and sigma variables to netcdf file. Also includes
 #' a valid global attribute to indicate validity of reach data.
 #'
-#' @param valid boolean value to indicate validity of reach
+#' @param index integer index number for parameter lists
 #' @param posterior_list list of posterior data
 #' @param var_list list of ncvar
 #' @param nc_out ncdf4
 #'
 #' @return None
-write_vars <- function(valid, posterior_list, var_list, nc_out) {
-
-  # Valid global attribute
-  if (valid == TRUE) valid = 1 else valid = 0
-  ncdf4::ncatt_put(nc_out, 0, "valid", valid)
-
-  # Reach id
-  ncdf4::ncvar_put(nc_out, var_list$id, posterior_list$reachid)
+write_vars <- function(index, posterior_list, var_list, nc_out) {
 
   # Mean variables
-  ncdf4::ncvar_put(nc_out, var_list$logq_m, posterior_list$logQ_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logn_man_m, posterior_list$logn_man_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logn_amhg_m, posterior_list$logn_amhg_mean)
-  ncdf4::ncvar_put(nc_out, var_list$A0_m, posterior_list$A0_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logWc_m, posterior_list$logWc_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logQc_m, posterior_list$logQc_mean)
-  ncdf4::ncvar_put(nc_out, var_list$b_m, posterior_list$b_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logr_m, posterior_list$logr_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logWb_m, posterior_list$logWb_mean)
-  ncdf4::ncvar_put(nc_out, var_list$logDb_m, posterior_list$logDb_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logq_m, posterior_list[[index]]$logQ_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logn_man_m, posterior_list[[index]]$logn_man_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logn_amhg_m, posterior_list[[index]]$logn_amhg_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$A0_m, posterior_list[[index]]$A0_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logWc_m, posterior_list[[index]]$logWc_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logQc_m, posterior_list[[index]]$logQc_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$b_m, posterior_list[[index]]$b_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logr_m, posterior_list[[index]]$logr_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logWb_m, posterior_list[[index]]$logWb_mean)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logDb_m, posterior_list[[index]]$logDb_mean)
 
   # Sigma variables
-  ncdf4::ncvar_put(nc_out, var_list$logq_sd, posterior_list$logQ_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logn_man_sd, posterior_list$logn_man_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logn_amhg_sd, posterior_list$logn_amhg_sd)
-  ncdf4::ncvar_put(nc_out, var_list$A0_sd, posterior_list$A0_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logWc_sd, posterior_list$logWc_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logQc_sd, posterior_list$logQc_sd)
-  ncdf4::ncvar_put(nc_out, var_list$b_sd, posterior_list$b_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logr_sd, posterior_list$logr_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logWb_sd, posterior_list$logWb_sd)
-  ncdf4::ncvar_put(nc_out, var_list$logDb_sd, posterior_list$logDb_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logq_sd, posterior_list[[index]]$logQ_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logn_man_sd, posterior_list[[index]]$logn_man_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logn_amhg_sd, posterior_list[[index]]$logn_amhg_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$A0_sd, posterior_list[[index]]$A0_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logWc_sd, posterior_list[[index]]$logWc_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logQc_sd, posterior_list[[index]]$logQc_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$b_sd, posterior_list[[index]]$b_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logr_sd, posterior_list[[index]]$logr_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logWb_sd, posterior_list[[index]]$logWb_sd)
+  ncdf4::ncvar_put(nc_out, var_list[[index]]$logDb_sd, posterior_list[[index]]$logDb_sd)
 }

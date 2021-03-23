@@ -4,10 +4,10 @@
 \alias{write_vars}
 \title{Write netcdf variables}
 \usage{
-write_vars(valid, posterior_list, var_list, nc_out)
+write_vars(index, posterior_list, var_list, nc_out)
 }
 \arguments{
-\item{valid}{boolean value to indicate validity of reach}
+\item{index}{integer index number for parameter lists}
 
 \item{posterior_list}{list of posterior data}
 

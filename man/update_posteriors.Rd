@@ -4,15 +4,17 @@
 \alias{update_posteriors}
 \title{Update posterior list with mean and sd posteriors in posteriors parameter}
 \usage{
-update_posteriors(posterior_list, posteriors)
+update_posteriors(index, posteriors, posterior_list)
 }
 \arguments{
-\item{posterior_list}{list of posterior data}
+\item{index}{integer number index (chain number) for both parameter lists}
 
 \item{posteriors}{list of posterior mean and sd values}
+
+\item{posterior_list}{list of posterior data}
 }
 \value{
-data.frame of updated posterior data
+list of updated posterior data for chain
 }
 \description{
 Update posterior list with mean and sd posteriors in posteriors parameter

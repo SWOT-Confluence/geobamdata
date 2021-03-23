@@ -10,7 +10,7 @@ get_posteriors(reach_data)
 \item{reach_data}{list of reach data (input observations)}
 }
 \value{
-list of mean and sd posteriors
+list of 3 chains with mean and sd posterior values
 }
 \description{
 Generate and extract geobam posteriors from reach data.

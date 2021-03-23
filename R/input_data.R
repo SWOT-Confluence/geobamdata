@@ -20,9 +20,10 @@ get_input_data <- function(reachid, data_dir) {
 
   # Track nx and nt
   nx <- ncdf4::ncvar_get(swot_input, "nx")
+  if (length(nx) > 10) nx = nx[1:10]
   #nt <- ncdf4::ncvar_get(swot_input, "nt")
   #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:100]
-  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:10]
+  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:324]
 
   # Check global attribute for reach validity and return empty list if invalid
   valid <- ncdf4::ncatt_get(sos_input, 0)$valid[[1]]
@@ -33,25 +34,22 @@ get_input_data <- function(reachid, data_dir) {
   width <- ncdf4::ncvar_get(swot_input, "node/width")
   width_fill <- ncdf4::ncatt_get(swot_input, "node/width", "_FillValue")
   width[width == width_fill$value] <- NA
-  #width = t(width)
-  #width = t(width)[, 4000:4099]
-  width = t(width)[, 4000:4009]
+  width = t(width)
+  if (length(nx) == 10) width = width[1:10, 4000:4323]
 
   #d_x_area ?? set 0 values to NA
   d_x_area <- ncdf4::ncvar_get(swot_input, "node/d_x_area")
   da_fill <- ncdf4::ncatt_get(swot_input, "node/d_x_area", "_FillValue")
   d_x_area[d_x_area == da_fill$value] <- NA
-  #d_x_area = t(d_x_area)
-  #d_x_area = t(d_x_area)[, 4000:4099]
-  d_x_area = t(d_x_area)[, 4000:4009]
+  d_x_area = t(d_x_area)
+  if (length(nx) == 10) d_x_area = d_x_area[1:10, 4000:4323]
 
   # slope2
   slope2 <- ncdf4::ncvar_get(swot_input, "node/slope2")
   slope_fill <- ncdf4::ncatt_get(swot_input, "node/slope2", "_FillValue")
   slope2[slope2 == slope_fill$value] <- NA
-  #slope2 = t(slope2)
-  #slope2 = t(slope2)[, 4000:4099]
-  slope2 = t(slope2)[, 4000:4009]
+  slope2 = t(slope2)
+  if (length(nx) == 10) slope2 = slope2[1:10, 4000:4323]
 
   # Qhat
   qhat <- ncdf4::ncvar_get(sos_input, "reach/Qhat")
@@ -98,21 +96,21 @@ check_observations <- function(width, d_x_area, slope2, qhat) {
   width <- width[!invalid_width$invalid_nodes, !invalid_width$invalid_time]
   d_x_area <- d_x_area[!invalid_width$invalid_nodes, !invalid_width$invalid_time]
   slope2 <- slope2[!invalid_width$invalid_nodes, !invalid_width$invalid_time]
-  if (nrow(width) < 5 || ncol(width) < 5 ) { return(vector(mode = "list")) }
+  if (is.null(dim(width)) || nrow(width) < 5 || ncol(width) < 5 ) { return(vector(mode = "list")) }
 
   # Get invalid d_x_area indexes and remove from observation data; test if enough data is present
   invalid_d_x_area <- get_invalid(d_x_area)
   d_x_area <- d_x_area[!invalid_d_x_area$invalid_nodes, !invalid_d_x_area$invalid_time]
   width <- width[!invalid_d_x_area$invalid_nodes, !invalid_d_x_area$invalid_time]
   slope2 <- slope2[!invalid_d_x_area$invalid_nodes, !invalid_d_x_area$invalid_time]
-  if (nrow(d_x_area) < 5 || ncol(d_x_area) < 5 ) { return(vector(mode = "list")) }
+  if (is.null(dim(d_x_area)) || nrow(d_x_area) < 5 || ncol(d_x_area) < 5 ) { return(vector(mode = "list")) }
 
   # Get invalid slope2 indexes and remove from observation data; test if enough data is present
   invalid_slope2 <- get_invalid(slope2)
   slope2 <- slope2[!invalid_slope2$invalid_nodes, !invalid_slope2$invalid_time]
   d_x_area <- d_x_area[!invalid_slope2$invalid_nodes, !invalid_slope2$invalid_time]
   width <- width[!invalid_slope2$invalid_nodes, !invalid_slope2$invalid_time]
-  if (nrow(slope2) < 5 || ncol(slope2) < 5 ) { return(vector(mode = "list")) }
+  if (is.null(dim(slope2)) || nrow(slope2) < 5 || ncol(slope2) < 5 ) { return(vector(mode = "list")) }
 
   # Concatenate lists
   invalid_width_n <- which(invalid_width$invalid_nodes == TRUE)
