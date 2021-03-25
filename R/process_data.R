@@ -7,24 +7,23 @@
 #'
 #' @param input_dir character vecto
 #' @param output_dir character
-#' @param env character name of environment to execute in
+#' @param env character name of environment to execute in (i.e. "workstation" or "slurm")
 #' @param cores number of cores to run on (for workstation run only)
-#' @param nodes number of nodes to run across (for HPC SLURM run only)
-#' @param ncpus number of cpus per node to run across (for HPC SLURM run only)
+#' @param ncpus number of cpus required per job (for HPC SLURM run only)
 #'
 #' @return None
 #'
 #' @export
-process_data <- function(input_dir, output_dir, env, cores = NA, nodes = NA, ncpus = NA) {
+process_data <- function(input_dir, output_dir, env, cores = NA, ncpus = NA) {
 
   # Obtain a list of reach identifiers from input data
-  swot_dir = file.path(input_dir, "swot")
+  swot_dir <- file.path(input_dir, "swot")
   reaches <- lapply(list.files(swot_dir), get_reach_id)
 
   # Run geobam on each reach in parallel single workstation
   if (env == "workstation") { run_workstation(reaches, input_dir, output_dir, cores) }
   # Run geobam on each reach in parallel HPC
-  else if (env == "slurm") { run_hpc(reaches, nodes, ncpus) }
+  else if (env == "slurm") { run_slurm(reaches, input_dir, output_dir, ncpus) }
   # Message error
   else { message("Invalid environment selected.") }
 
@@ -69,21 +68,28 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
   parallel::stopCluster(cl)
 }
 
-#' Run geoBAM in parallel across nodes on specified number of cores.
+#' Run geoBAM in parallel using batchtools where each reach is submitted
+#' as a job.
 #'
 #' @param reaches list of string reach identifiers
 #' @param input_dir string input directory
 #' @param output_dir string output directory
-#' @param nodes integer
-#' @param cpus_per_node integer
-run_hpc <- function(reaches, input_dir, output_dir, nodes, cpus_per_node) {
-  reach_df <- data.frame(reachid = matrix(unlist(reaches), nrow = length(reaches), byrow = TRUE), stringsAsFactors = FALSE)
-  reach_df$data_dir <- rep(input_dir, length(reaches))
-  reach_df$output_dir <- rep(output_dir, length(reaches))
-  slurm_opts <- list(partition = "cee_water_cjgleason")
-  sjob <- rslurm::slurm_apply(run_geobam, reach_df,
-                              jobname = "geobam", nodes = 1, cpus_per_node = 48,
-                              pkgs = c("ncdf4", "geoBAMr"),
-                              slurm_options = slurm_opts, submit = TRUE)
-  rslurm::cleanup_files(sjob, wait = TRUE)
+#' @param ncpus integer number of cpus per job.
+run_slurm <- function(reaches, input_dir, output_dir, ncpus) {
+  # Create a registry
+  reg_dir <- "/home/ntebaldi_umass_edu/geobamdata_run/batchtools_data/batch_10_rpof"
+  conf_file <- "/home/ntebaldi_umass_edu/geobamdata_run/batchtools_data/.batchtools.conf.R"
+  reg <- batchtools::makeRegistry(file.dir = reg_dir, conf.file = conf_file)
+
+  # Map jobs
+  ids <- batchtools::batchMap(fun = run_geobam, reachid = reaches,
+                              more.args = list(data_dir = input_dir,
+                                               output_dir = output_dir), reg = reg)
+
+  # Submit jobs to the cluster
+  done <- batchtools::submitJobs(ids, reg = reg,
+                                 resources = list(walltime = 3600, memory = 4096,
+                                                  ncpus = 3, foreach.backend = "parallel", ntasks = 1,
+                                                  partition = "cee_water_cjgleason"))
+  batchtools::waitForJobs()
 }

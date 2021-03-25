@@ -32,8 +32,8 @@ write_netcdf <- function(reach_data, posterior_list, output_dir) {
   # Concatenate invalid nodes back into valid posterior reach data
   if (reach_data$valid == TRUE) {
     posterior_list <- lapply(posterior_list, concatenate_invalid,
-                                   invalid_nodes = reach_data$invalid_nodes,
-                                   invalid_time = reach_data$invalid_time)
+                             invalid_nodes = reach_data$invalid_nodes,
+                             invalid_time = reach_data$invalid_time)
   }
 
   # Write valid global attribute, reach identifier and posteriors to netcdf

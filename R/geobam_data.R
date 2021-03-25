@@ -18,7 +18,7 @@ run_geobam <- function(reachid, data_dir, output_dir) {
 
   # Run geobam on valid input reach data
   if (reach_data$valid == TRUE) {
-    posteriors = get_posteriors(reach_data)
+    posteriors <- get_posteriors(reach_data)
     posterior_list <- lapply(list(1, 2, 3), update_posteriors, posteriors = posteriors, posterior_list = posterior_list)
   }
 
@@ -79,13 +79,14 @@ get_posteriors <- function(reach_data) {
 
   # Create and store three chains from bam_estimate run
   cl <- parallel::makeCluster(3)
-  parallel::clusterExport(cl, c("extract_geobam_posteriors", "get_mean", "get_sd"))
+  #parallel::clusterExport(cl, c("extract_geobam_posteriors", "get_mean", "get_sd"))
   doParallel::registerDoParallel(cl)
   `%dopar%` <- foreach::`%dopar%`
   posteriors_list <- foreach::foreach(indexes = 1:3, .combine = 'c',
-                                    .packages = c("geoBAMr")) %dopar%
-                                    extract_geobam_posteriors(geobam_data = geobam,
-                                                              priors = priors)
+                                      .packages = c("geoBAMr"),
+                                      .export = c("extract_geobam_posteriors", "get_mean", "get_sd")) %dopar%
+    extract_geobam_posteriors(geobam_data = geobam,
+                              priors = priors)
   parallel::stopCluster(cl)
 
   # Return list of posteriors for each chain
@@ -102,9 +103,9 @@ get_posteriors <- function(reach_data) {
 extract_geobam_posteriors <- function(geobam_data, priors) {
   # Get stanfit object data
   estimate <- geoBAMr::bam_estimate(bamdata = geobam_data,
-                          bampriors = priors,
-                          variant = 'manning_amhg',
-                          chains = 1)
+                                    bampriors = priors,
+                                    variant = 'manning_amhg',
+                                    chains = 1, cores = 1)
   # Extract posteriors
   posteriors <- rstan::extract(estimate, permuted = TRUE)[1:10]
   mean_posteriors <- lapply(posteriors, get_mean)

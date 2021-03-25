@@ -20,36 +20,39 @@ get_input_data <- function(reachid, data_dir) {
 
   # Track nx and nt
   nx <- ncdf4::ncvar_get(swot_input, "nx")
-  if (length(nx) > 10) nx = nx[1:10]
+  if (length(nx) > 10) nx = nx[1:11]
   #nt <- ncdf4::ncvar_get(swot_input, "nt")
-  #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:100]
-  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:324]
+  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:100]
+  #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:324]
 
   # Check global attribute for reach validity and return empty list if invalid
   valid <- ncdf4::ncatt_get(sos_input, 0)$valid[[1]]
   if (valid == 0) { return(list(valid = FALSE, reachid = reachid, nx = nx,
-                                     nt = nt)) }
+                                nt = nt)) }
 
   # width
   width <- ncdf4::ncvar_get(swot_input, "node/width")
   width_fill <- ncdf4::ncatt_get(swot_input, "node/width", "_FillValue")
   width[width == width_fill$value] <- NA
   width = t(width)
-  if (length(nx) == 10) width = width[1:10, 4000:4323]
+  if (length(nx) == 11) width = width[1:11, 4000:4099]
+  #if (length(nx) == 11) width = width[1:11, 4000:4323]
 
   #d_x_area ?? set 0 values to NA
   d_x_area <- ncdf4::ncvar_get(swot_input, "node/d_x_area")
   da_fill <- ncdf4::ncatt_get(swot_input, "node/d_x_area", "_FillValue")
   d_x_area[d_x_area == da_fill$value] <- NA
   d_x_area = t(d_x_area)
-  if (length(nx) == 10) d_x_area = d_x_area[1:10, 4000:4323]
+  if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4099]
+  #if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4323]
 
   # slope2
   slope2 <- ncdf4::ncvar_get(swot_input, "node/slope2")
   slope_fill <- ncdf4::ncatt_get(swot_input, "node/slope2", "_FillValue")
   slope2[slope2 == slope_fill$value] <- NA
   slope2 = t(slope2)
-  if (length(nx) == 10) slope2 = slope2[1:10, 4000:4323]
+  if (length(nx) == 11) slope2 = slope2[1:11, 4000:4099]
+  #if (length(nx) == 11) slope2 = slope2[1:11, 4000:4323]
 
   # Qhat
   qhat <- ncdf4::ncvar_get(sos_input, "reach/Qhat")
@@ -60,15 +63,15 @@ get_input_data <- function(reachid, data_dir) {
   # Check validity of observation data
   obs_data <- check_observations(width, d_x_area, slope2, qhat)
   if (length(obs_data) == 0) { return(list(valid = FALSE,
-                                                reachid = reachid, nx = nx,
-                                                nt = nt)) }
+                                           reachid = reachid, nx = nx,
+                                           nt = nt)) }
 
   # Create a list of data with reach identifier
   return(list(valid = TRUE, reachid = reachid, nx = nx, nt = nt,
-                   width = obs_data$width, slope2 = obs_data$slope2,
-                   d_x_area = obs_data$d_x_area, qhat = obs_data$qhat,
-                   invalid_nodes = obs_data$invalid_nodes,
-                   invalid_time = obs_data$invalid_time))
+              width = obs_data$width, slope2 = obs_data$slope2,
+              d_x_area = obs_data$d_x_area, qhat = obs_data$qhat,
+              invalid_nodes = obs_data$invalid_nodes,
+              invalid_time = obs_data$invalid_time))
 
 }
 
