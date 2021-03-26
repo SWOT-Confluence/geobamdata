@@ -88,7 +88,7 @@ run_slurm <- function(reaches, input_dir, output_dir, ncpus) {
 
   # Submit jobs to the cluster
   done <- batchtools::submitJobs(ids, reg = reg,
-                                 resources = list(walltime = 3600, memory = 4096,
+                                 resources = list(walltime = 3600, memory = 1000,
                                                   ncpus = 3, foreach.backend = "parallel", ntasks = 1,
                                                   partition = "cee_water_cjgleason"))
   batchtools::waitForJobs()
