@@ -22,7 +22,7 @@ get_input_data <- function(reachid, data_dir) {
   nx <- ncdf4::ncvar_get(swot_input, "nx")
   if (length(nx) > 10) nx = nx[1:11]
   #nt <- ncdf4::ncvar_get(swot_input, "nt")
-  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:100]
+  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:10]
   #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:324]
 
   # Check global attribute for reach validity and return empty list if invalid
@@ -35,7 +35,7 @@ get_input_data <- function(reachid, data_dir) {
   width_fill <- ncdf4::ncatt_get(swot_input, "node/width", "_FillValue")
   width[width == width_fill$value] <- NA
   width = t(width)
-  if (length(nx) == 11) width = width[1:11, 4000:4099]
+  if (length(nx) == 11) width = width[1:11, 4000:4009]
   #if (length(nx) == 11) width = width[1:11, 4000:4323]
 
   #d_x_area ?? set 0 values to NA
@@ -43,7 +43,7 @@ get_input_data <- function(reachid, data_dir) {
   da_fill <- ncdf4::ncatt_get(swot_input, "node/d_x_area", "_FillValue")
   d_x_area[d_x_area == da_fill$value] <- NA
   d_x_area = t(d_x_area)
-  if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4099]
+  if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4009]
   #if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4323]
 
   # slope2
@@ -51,7 +51,7 @@ get_input_data <- function(reachid, data_dir) {
   slope_fill <- ncdf4::ncatt_get(swot_input, "node/slope2", "_FillValue")
   slope2[slope2 == slope_fill$value] <- NA
   slope2 = t(slope2)
-  if (length(nx) == 11) slope2 = slope2[1:11, 4000:4099]
+  if (length(nx) == 11) slope2 = slope2[1:11, 4000:4009]
   #if (length(nx) == 11) slope2 = slope2[1:11, 4000:4323]
 
   # Qhat
@@ -65,6 +65,10 @@ get_input_data <- function(reachid, data_dir) {
   if (length(obs_data) == 0) { return(list(valid = FALSE,
                                            reachid = reachid, nx = nx,
                                            nt = nt)) }
+
+  # Close files
+  ncdf4::nc_close(swot_input)
+  ncdf4::nc_close(sos_input)
 
   # Create a list of data with reach identifier
   return(list(valid = TRUE, reachid = reachid, nx = nx, nt = nt,
