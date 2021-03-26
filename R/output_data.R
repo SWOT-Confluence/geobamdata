@@ -19,14 +19,8 @@ write_netcdf <- function(reach_data, posterior_list, output_dir) {
   var_list <- lapply(list(1,2,3), create_vars, reachid = reach_data$reachid,
                      nt_dim = dim_list$nt_dim, nx_dim = dim_list$nx_dim)
 
-  # Define reachid variable
-  nchar_dim <- ncdf4::ncdim_def("nchar", "", 1:10, create_dimvar = FALSE)
-  id <- ncdf4::ncvar_def(paste(reach_data$reachid, "reach_id", sep ='/'),
-                         units = '', dim = list(nchar_dim), prec = "char")
-
   # Create netcdf
-  all_vars <- append(var_list, list(list(id = id)))
-  all_vars <- unlist(all_vars, recursive = FALSE, use.names = FALSE)
+  all_vars <- unlist(var_list, recursive = FALSE, use.names = FALSE)
   nc_out <- create_nc_file(reach_data$reachid, all_vars, output_dir)
 
   # Concatenate invalid nodes back into valid posterior reach data
@@ -36,10 +30,10 @@ write_netcdf <- function(reach_data, posterior_list, output_dir) {
                              invalid_time = reach_data$invalid_time)
   }
 
-  # Write valid global attribute, reach identifier and posteriors to netcdf
+  # Write valid and reach id global attributes and posteriors to netcdf
   if (reach_data$valid == TRUE) valid = 1 else valid = 0
   ncdf4::ncatt_put(nc_out, 0, "valid", valid)
-  ncdf4::ncvar_put(nc_out, id, reach_data$reachid)
+  ncdf4::ncatt_put(nc_out, 0, "reachid", reach_data$reachid)
   lapply(list(1,2,3), write_vars, posterior_list = posterior_list,
          var_list = var_list, nc_out = nc_out)
 
