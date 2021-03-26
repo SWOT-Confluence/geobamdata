@@ -21,7 +21,8 @@ Imports:
     settings,
     parallel,
     doParallel,
-    rslurm
+    batchtools,
+    yaml
 Suggests: 
     geoBAMr,
     testthat
