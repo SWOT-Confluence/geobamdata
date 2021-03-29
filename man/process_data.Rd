@@ -4,7 +4,14 @@
 \alias{process_data}
 \title{Execute geobam on data}
 \usage{
-process_data(input_dir, output_dir, env, cores = NA, ncpus = NA)
+process_data(
+  input_dir,
+  output_dir,
+  env,
+  cores = NA,
+  partition = NA,
+  max_jobs = NA
+)
 }
 \arguments{
 \item{input_dir}{character vecto}
@@ -15,7 +22,9 @@ process_data(input_dir, output_dir, env, cores = NA, ncpus = NA)
 
 \item{cores}{number of cores to run on (for workstation run only)}
 
-\item{ncpus}{number of cpus required per job (for HPC SLURM run only)}
+\item{partition}{string partition name to run jobs on (slurm run only)}
+
+\item{max_jobs}{integer max number of jobs to be run concurrently (slurm run only)}
 }
 \value{
 None

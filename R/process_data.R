@@ -9,12 +9,15 @@
 #' @param output_dir character
 #' @param env character name of environment to execute in (i.e. "workstation" or "slurm")
 #' @param cores number of cores to run on (for workstation run only)
-#' @param ncpus number of cpus required per job (for HPC SLURM run only)
+#' @param partition string partition name to run jobs on (slurm run only)
+#' @param max_jobs integer max number of jobs to be run concurrently (slurm run only)
+#' @param as_job_array boolean indication to run execute as job array (slurm run only)
 #'
 #' @return None
 #'
 #' @export
-process_data <- function(input_dir, output_dir, env, cores = NA, ncpus = NA) {
+process_data <- function(input_dir, output_dir, env, cores = NA, partition = NA,
+                         max_jobs = NA, as_job_array = FALSE) {
 
   # Obtain a list of reach identifiers from input data
   swot_dir <- file.path(input_dir, "swot")
@@ -23,7 +26,7 @@ process_data <- function(input_dir, output_dir, env, cores = NA, ncpus = NA) {
   # Run geobam on each reach in parallel single workstation
   if (env == "workstation") { run_workstation(reaches, input_dir, output_dir, cores) }
   # Run geobam on each reach in parallel HPC
-  else if (env == "slurm") { run_slurm(reaches, input_dir, output_dir, ncpus) }
+  else if (env == "slurm") { run_slurm(reaches, input_dir, output_dir, partition, max_jobs, as_job_array) }
   # Message error
   else { message("Invalid environment selected.") }
 
@@ -71,25 +74,55 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
 #' Run geoBAM in parallel using batchtools where each reach is submitted
 #' as a job.
 #'
+#' NOTE: To AVOID submitting too many jobs to the cluster you need to consider
+#' the number of reaches (jobs) that you will need to process in parallel and 
+#' the max number of cores you have available to you. Each execution of geobamdata 
+#' takes 4 cores per reach. So if you divide the max number of cores by 4 you 
+#' should get the max_jobs you can run concurrently and that is what you need 
+#' to pass to the max_jobs parameter.
+#'
 #' @param reaches list of string reach identifiers
 #' @param input_dir string input directory
 #' @param output_dir string output directory
-#' @param ncpus integer number of cpus per job.
-run_slurm <- function(reaches, input_dir, output_dir, ncpus) {
+#' @param partition string name of partition to run on
+#' @param max_jobs maximum number of jobs to be run concurrently; enter -1 to disable chunking
+#' @param as_job_array boolean indicates if job should be run as a job array
+#' @importFrom data.table :=
+run_slurm <- function(reaches, input_dir, output_dir, partition, max_jobs, as_job_array = FALSE) {
   # Create a registry
-  reg_dir <- "/home/ntebaldi_umass_edu/geobamdata_run/batchtools_data/batch_10_rpof"
-  conf_file <- "/home/ntebaldi_umass_edu/geobamdata_run/batchtools_data/.batchtools.conf.R"
+  reg_dir <- file.path("/home", "ntebaldi_umass_edu", "geobamdata_run", 
+                       "batchtools_data", "60")
+  conf_file <- file.path("/home", "ntebaldi_umass_edu", "geobamdata_run", 
+                         "batchtools_data", ".batchtools.conf.R")
   reg <- batchtools::makeRegistry(file.dir = reg_dir, conf.file = conf_file)
 
   # Map jobs
   ids <- batchtools::batchMap(fun = run_geobam, reachid = reaches,
                               more.args = list(data_dir = input_dir,
-                                               output_dir = output_dir), reg = reg)
+                                               output_dir = output_dir), 
+                              reg = reg)
+
+  # Name jobs
+  names <- lapply(ids[[1]], function(id) { paste("geobam_", id, sep = '') })
+  batchtools::setJobNames(ids = ids, names = unlist(names))
+
+  # Chunk jobs where input size is divided by max_jobs
+  if (max_jobs != -1){
+    chunk <- NULL
+    job.id <- NULL
+    ids[, chunk := batchtools::chunk(job.id, chunk.size = (length(reaches) / max_jobs))]
+  }
 
   # Submit jobs to the cluster
   done <- batchtools::submitJobs(ids, reg = reg,
                                  resources = list(walltime = 3600, memory = 1000,
-                                                  ncpus = 3, foreach.backend = "parallel", ntasks = 1,
-                                                  partition = "cee_water_cjgleason"))
+                                                  ncpus = 3, 
+                                                  chunks.as.arrayjobs = as_job_array,
+                                                  foreach.backend = "parallel", 
+                                                  ntasks = 1,
+                                                  partition = partition))
+  # Wait for jobs to complete then clear registry
   batchtools::waitForJobs()
+  #batchtools::clearRegistry()
+  #batchtools::removeRegistry(wait = 0, reg = reg)
 }

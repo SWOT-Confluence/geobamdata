@@ -5,7 +5,7 @@
 \title{Run geoBAM in parallel using batchtools where each reach is submitted
 as a job.}
 \usage{
-run_slurm(reaches, input_dir, output_dir, ncpus)
+run_slurm(reaches, input_dir, output_dir, partition, max_jobs)
 }
 \arguments{
 \item{reaches}{list of string reach identifiers}
@@ -14,9 +14,17 @@ run_slurm(reaches, input_dir, output_dir, ncpus)
 
 \item{output_dir}{string output directory}
 
-\item{ncpus}{integer number of cpus per job.}
+\item{partition}{string name of partition to run on}
+
+\item{max_jobs}{maximum number of jobs to be run concurrently}
+
+\item{job_array}{boolean indicates if job should be run as a job array}
 }
 \description{
-Run geoBAM in parallel using batchtools where each reach is submitted
-as a job.
+NOTE: To AVOID submitting too many jobs to the cluster you need to consider
+the number of reaches (jobs) that you will need to process and the max 
+number of cores you have available to you. Each execution of geobamdata 
+takes 4 cores per reach. So if you divide the max number of cores by 4 you 
+should get the max_jobs you can run concurrently and that is what you need 
+to pass to the max_jobs parameter.
 }

@@ -22,7 +22,8 @@ Imports:
     parallel,
     doParallel,
     batchtools,
-    yaml
+    yaml,
+    data.table
 Suggests: 
     geoBAMr,
     testthat
