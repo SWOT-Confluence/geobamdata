@@ -10,7 +10,8 @@ process_data(
   env,
   cores = NA,
   partition = NA,
-  max_jobs = NA
+  max_jobs = NA,
+  as_job_array = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ process_data(
 \item{partition}{string partition name to run jobs on (slurm run only)}
 
 \item{max_jobs}{integer max number of jobs to be run concurrently (slurm run only)}
+
+\item{as_job_array}{boolean indication to run execute as job array (slurm run only)}
 }
 \value{
 None

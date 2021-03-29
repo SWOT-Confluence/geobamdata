@@ -52,19 +52,19 @@ get_reach_id <- function(swot_file) {
 #' @param cores integer number of cores in system (default is determed by detectCores)
 run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::detectCores()) {
   # Setup cluster and register do parallel operator
-  cl <- parallel::makeCluster(cores, outfile = "debug_process.txt")
-  parallel::clusterExport(cl, c("run_geobam", "get_input_data",
-                                "check_observations", "get_invalid",
-                                "create_posterior_list", "get_posteriors",
-                                "extract_geobam_posteriors", "update_posteriors",
-                                "get_mean", "get_sd",
-                                "write_netcdf", "create_dimensions",
-                                "create_vars", "create_nc_file",
-                                "concatenate_invalid", "write_vars"))
+  cl <- parallel::makeCluster(cores)
   doParallel::registerDoParallel(cl)
   reachid <- NULL
   `%dopar%` <- foreach::`%dopar%`
-  foreach::foreach(reachid = reaches, .packages = c("ncdf4", "geoBAMr")) %dopar%
+  foreach::foreach(reachid = reaches, .packages = c("ncdf4", "geoBAMr"),
+                   .export =  c("run_geobam", "get_input_data",
+                               "check_observations", "get_invalid",
+                               "create_posterior_list", "get_posteriors",
+                               "extract_geobam_posteriors", "update_posteriors",
+                               "get_mean", "get_sd",
+                               "write_netcdf", "create_dimensions",
+                               "create_vars", "create_nc_file",
+                               "concatenate_invalid", "write_vars")) %dopar%
     run_geobam(reachid = reachid, data_dir = input_dir, output_dir = output_dir)
 
   # Close cluster connections
@@ -75,10 +75,10 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
 #' as a job.
 #'
 #' NOTE: To AVOID submitting too many jobs to the cluster you need to consider
-#' the number of reaches (jobs) that you will need to process in parallel and 
-#' the max number of cores you have available to you. Each execution of geobamdata 
-#' takes 4 cores per reach. So if you divide the max number of cores by 4 you 
-#' should get the max_jobs you can run concurrently and that is what you need 
+#' the number of reaches (jobs) that you will need to process in parallel and
+#' the max number of cores you have available to you. Each execution of geobamdata
+#' takes 4 cores per reach. So if you divide the max number of cores by 4 you
+#' should get the max_jobs you can run concurrently and that is what you need
 #' to pass to the max_jobs parameter.
 #'
 #' @param reaches list of string reach identifiers
@@ -90,16 +90,14 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
 #' @importFrom data.table :=
 run_slurm <- function(reaches, input_dir, output_dir, partition, max_jobs, as_job_array = FALSE) {
   # Create a registry
-  reg_dir <- file.path("/home", "ntebaldi_umass_edu", "geobamdata_run", 
-                       "batchtools_data", "60")
-  conf_file <- file.path("/home", "ntebaldi_umass_edu", "geobamdata_run", 
-                         "batchtools_data", ".batchtools.conf.R")
+  reg_dir <- file.path("/app", "batchtools_data", "gb_reg")
+  conf_file <- file.path("/app", "batchtools_data", ".batchtools.conf.R")
   reg <- batchtools::makeRegistry(file.dir = reg_dir, conf.file = conf_file)
 
   # Map jobs
   ids <- batchtools::batchMap(fun = run_geobam, reachid = reaches,
                               more.args = list(data_dir = input_dir,
-                                               output_dir = output_dir), 
+                                               output_dir = output_dir),
                               reg = reg)
 
   # Name jobs
@@ -115,14 +113,14 @@ run_slurm <- function(reaches, input_dir, output_dir, partition, max_jobs, as_jo
 
   # Submit jobs to the cluster
   done <- batchtools::submitJobs(ids, reg = reg,
-                                 resources = list(walltime = 3600, memory = 1000,
-                                                  ncpus = 3, 
+                                 resources = list(walltime = 10080, memory = 1000,
+                                                  ncpus = 3,
                                                   chunks.as.arrayjobs = as_job_array,
-                                                  foreach.backend = "parallel", 
+                                                  foreach.backend = "parallel",
                                                   ntasks = 1,
                                                   partition = partition))
   # Wait for jobs to complete then clear registry
   batchtools::waitForJobs()
-  #batchtools::clearRegistry()
-  #batchtools::removeRegistry(wait = 0, reg = reg)
+  batchtools::clearRegistry()
+  batchtools::removeRegistry(wait = 0, reg = reg)
 }

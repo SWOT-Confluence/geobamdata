@@ -22,8 +22,8 @@ get_input_data <- function(reachid, data_dir) {
   nx <- ncdf4::ncvar_get(swot_input, "nx")
   if (length(nx) > 10) nx = nx[1:11]
   #nt <- ncdf4::ncvar_get(swot_input, "nt")
-  #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:10]
-  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:324]
+  nt <- ncdf4::ncvar_get(swot_input, "nt")[1:10]
+  #nt <- ncdf4::ncvar_get(swot_input, "nt")[1:324]
 
   # Check global attribute for reach validity and return empty list if invalid
   valid <- ncdf4::ncatt_get(sos_input, 0)$valid[[1]]
@@ -35,24 +35,24 @@ get_input_data <- function(reachid, data_dir) {
   width_fill <- ncdf4::ncatt_get(swot_input, "node/width", "_FillValue")
   width[width == width_fill$value] <- NA
   width = t(width)
-  #if (length(nx) == 11) width = width[1:11, 4000:4009]
-  if (length(nx) == 11) width = width[1:11, 4000:4323]
+  if (length(nx) == 11) width = width[1:11, 4000:4009]
+  #if (length(nx) == 11) width = width[1:11, 4000:4323]
 
   #d_x_area ?? set 0 values to NA
   d_x_area <- ncdf4::ncvar_get(swot_input, "node/d_x_area")
   da_fill <- ncdf4::ncatt_get(swot_input, "node/d_x_area", "_FillValue")
   d_x_area[d_x_area == da_fill$value] <- NA
   d_x_area = t(d_x_area)
-  #if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4009]
-  if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4323]
+  if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4009]
+  #if (length(nx) == 11) d_x_area = d_x_area[1:11, 4000:4323]
 
   # slope2
   slope2 <- ncdf4::ncvar_get(swot_input, "node/slope2")
   slope_fill <- ncdf4::ncatt_get(swot_input, "node/slope2", "_FillValue")
   slope2[slope2 == slope_fill$value] <- NA
   slope2 = t(slope2)
-  #if (length(nx) == 11) slope2 = slope2[1:11, 4000:4009]
-  if (length(nx) == 11) slope2 = slope2[1:11, 4000:4323]
+  if (length(nx) == 11) slope2 = slope2[1:11, 4000:4009]
+  #if (length(nx) == 11) slope2 = slope2[1:11, 4000:4323]
 
   # Qhat
   qhat <- ncdf4::ncvar_get(sos_input, "reach/Qhat")
