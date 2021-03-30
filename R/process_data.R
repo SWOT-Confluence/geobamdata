@@ -90,7 +90,7 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
 #' @importFrom data.table :=
 run_slurm <- function(reaches, input_dir, output_dir, partition, max_jobs, as_job_array = FALSE) {
   # Create a registry
-  reg_dir <- file.path("/app", "batchtools_data", "gb_reg")
+  reg_dir <- file.path("/home", Sys.getenv("USER"), "gb_reg")
   conf_file <- file.path("/app", "batchtools_data", ".batchtools.conf.R")
   reg <- batchtools::makeRegistry(file.dir = reg_dir, conf.file = conf_file)
 
