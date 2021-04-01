@@ -23,7 +23,9 @@ Imports:
     doParallel,
     batchtools,
     yaml,
-    data.table
+    data.table,
+    Rmpi,
+    doMPI
 Suggests: 
     geoBAMr,
     testthat

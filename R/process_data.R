@@ -25,6 +25,8 @@ process_data <- function(input_dir, output_dir, env, cores = NA, partition = NA,
 
   # Run geobam on each reach in parallel single workstation
   if (env == "workstation") { run_workstation(reaches, input_dir, output_dir, cores) }
+  # Use MPI to execute geoBAM
+  if (env == "mpi") { run_mpi(reaches, input_dir, output_dir) }
   # Run geobam on each reach in parallel HPC
   else if (env == "slurm") { run_slurm(reaches, input_dir, output_dir, partition, max_jobs, as_job_array) }
   # Message error
@@ -71,6 +73,28 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
   parallel::stopCluster(cl)
 }
 
+run_mpi <- function(reaches, input_dir, output_dir) {
+  # Setup cluster and register do parallel operator
+  cl <- doMPI::startMPIcluster()
+  doMPI::registerDoMPI(cl)
+  reachid <- NULL
+  `%dopar%` <- foreach::`%dopar%`
+  foreach::foreach(reachid = reaches, .packages = c("ncdf4", "geoBAMr"),
+                   .export =  c("run_geobam", "get_input_data",
+                                "check_observations", "get_invalid",
+                                "create_posterior_list", "get_posteriors",
+                                "extract_geobam_posteriors", "update_posteriors",
+                                "get_mean", "get_sd",
+                                "write_netcdf", "create_dimensions",
+                                "create_vars", "create_nc_file",
+                                "concatenate_invalid", "write_vars")) %dopar%
+    run_geobam(reachid = reachid, data_dir = input_dir, output_dir = output_dir)
+
+  # Close cluster connections
+  doMPI::closeCluster(cl)
+  Rmpi::mpi.quit()
+}
+
 #' Run geoBAM in parallel using batchtools where each reach is submitted
 #' as a job.
 #'
@@ -89,10 +113,12 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
 #' @param as_job_array boolean indicates if job should be run as a job array
 #' @importFrom data.table :=
 run_slurm <- function(reaches, input_dir, output_dir, partition, max_jobs, as_job_array = FALSE) {
+
   # Create a registry
   reg_dir <- file.path("/home", Sys.getenv("USER"), "gb_reg")
   conf_file <- file.path("/app", "batchtools_data", ".batchtools.conf.R")
   reg <- batchtools::makeRegistry(file.dir = reg_dir, conf.file = conf_file)
+  options(batchtools.progress = FALSE)
 
   # Map jobs
   ids <- batchtools::batchMap(fun = run_geobam, reachid = reaches,
