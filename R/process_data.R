@@ -73,6 +73,12 @@ run_workstation <- function(reaches, input_dir, output_dir, cores = parallel::de
   parallel::stopCluster(cl)
 }
 
+#' Run geoBAM in parallel on multiple processes across nodes using doMPI backend
+#' to foreach function.
+#'
+#' @param reaches list of string reach identifiers
+#' @param input_dir string input directory
+#' @param output_dir string output directory
 run_mpi <- function(reaches, input_dir, output_dir) {
   # Setup cluster and register do parallel operator
   cl <- doMPI::startMPIcluster()
