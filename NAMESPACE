@@ -3,7 +3,5 @@
 export(check_observations)
 export(get_input_data)
 export(get_invalid)
-export(process_data)
 export(run_geobam)
 export(write_netcdf)
-importFrom(data.table,":=")
