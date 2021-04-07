@@ -23,6 +23,7 @@ Imports:
     doParallel,
     yaml,
     data.table,
+    R.utils
 Suggests: 
     geoBAMr,
     testthat
