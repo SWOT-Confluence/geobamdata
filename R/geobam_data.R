@@ -79,7 +79,6 @@ get_posteriors <- function(reach_data) {
 
   # Create and store three chains from bam_estimate run
   cl <- parallel::makeCluster(3)
-  #parallel::clusterExport(cl, c("extract_geobam_posteriors", "get_mean", "get_sd"))
   doParallel::registerDoParallel(cl)
   `%dopar%` <- foreach::`%dopar%`
   posteriors_list <- foreach::foreach(indexes = 1:3, .combine = 'c',
